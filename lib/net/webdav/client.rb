@@ -12,7 +12,7 @@ module Net
         @host = "#{scheme}://#{hostname}#{port.nil? ? "" : ":" + port}"
         @http_auth_types = options[:http_auth_types] || :basic
 
-        unless userinfo.nil?            
+        unless userinfo.nil?
           @username, @password = userinfo.split(':')
         else
           @username = options[:username]
@@ -32,24 +32,27 @@ module Net
       end
       
       def put_file path, file, create_path = false
-        response = Curl::Easy.http_put full_url(path), file, &method(:auth)
-
-        if create_path and response.response_code == 409 # conflict; parent path doesn't exist, try to create recursively
+        connection = Curl::Easy.http_head full_url(path), &method(:auth)
+        
+        if create_path
           scheme, userinfo, hostname, port, registry, path, opaque, query, fragment = URI.split(full_url(path))
           path_parts = path.split('/').reject {|s| s.nil? || s.empty?}
-
-          for i in 0..(path_parts.length - 2)
+          path_parts.pop
+          
+          for i in 0..(path_parts.length - 1)
             parent_path = path_parts[0..i].join('/')
             url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port}/", parent_path)
-            response = make_directory(url)
-            return response unless response.response_code == 201 || response.response_code == 405 # 201 Created or 405 Conflict (already exists)
-          end
-
-          response = Curl::Easy.http_put full_url(path), file, &method(:auth)
+            connection.url = full_url( url )
+            connection.http(:MKCOL)
+            return connection.response_code unless connection.response_code == 201 || connection.response_code == 405 # 201 Created or 405 Conflict (already exists)
+          end  
         end
 
-        raise response.status unless (response.response_code == 201 || response.response_code == 204)
-        response
+        connection.url = full_url(path)
+        connection.http_put file
+        
+        raise connection.status unless (connection.response_code == 201 || connection.response_code == 204)
+        connection.response_code
       end
 
       def delete_file path
@@ -65,8 +68,7 @@ module Net
       
       private
       def auth curl
-        curl.username = @username unless @username.nil?
-        curl.password = @password unless @password.nil?
+        curl.userpwd = "#{@username}:#{@password}"
         curl.http_auth_types = @http_auth_types unless @http_auth_types.nil?
       end
       
