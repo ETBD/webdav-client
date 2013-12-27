@@ -21,36 +21,43 @@ module Net
 
         @url = URI.join(@host, path)
       end
-      
+
       def file_exists? path
         response = Curl::Easy.http_head full_url(path)
         response.response_code >= 200 && response.response_code <= 209
       end
-      
+
       def get_file remote_file_path, local_file_path
-        Curl::Easy.download full_url(remote_file_path), local_file_path
+        file = output_file(local_file_path)
+
+        connection = Curl::Easy.new
+        connection.userpwd = curl_credentials if @username.present? && @password.present?
+        connection.url = full_url(remote_file_path)
+        connection.perform
+
+        raise connection.status unless connection.response_code == 200
+
+        file.write(connection.body_str)
       end
-      
+
       def put_file path, file, create_path = false
         connection = Curl::Easy.http_head full_url(path), &method(:auth)
-        
+
         if create_path
           scheme, userinfo, hostname, port, registry, path, opaque, query, fragment = URI.split(full_url(path))
           path_parts = path.split('/').reject {|s| s.nil? || s.empty?}
           path_parts.pop
-          
+
           for i in 0..(path_parts.length - 1)
             parent_path = path_parts[0..i].join('/')
             url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port}/", parent_path)
             connection.url = full_url( url )
             connection.http(:MKCOL)
             return connection.response_code unless connection.response_code == 201 || connection.response_code == 405 # 201 Created or 405 Conflict (already exists)
-          end  
+          end
         end
-
         connection.url = full_url(path)
         connection.http_put file
-        
         raise connection.status unless (connection.response_code == 201 || connection.response_code == 204)
         connection.response_code
       end
@@ -65,15 +72,28 @@ module Net
         curl.http(:MKCOL)
         curl
       end
-      
+
       private
+      def curl_credentials
+        "#{@username}:#{@password}"
+      end
+
       def auth curl
-        curl.userpwd = "#{@username}:#{@password}"
+        curl.userpwd = curl_credentials
         curl.http_auth_types = @http_auth_types unless @http_auth_types.nil?
       end
-      
+
       def full_url path
         URI.join(@url, path).to_s
+      end
+
+      def output_file(filename)
+        if filename.is_a? IO
+          filename.binmode if filename.respond_to?(:binmode)
+          filename
+        else
+          File.open(filename, 'wb')
+        end
       end
     end
   end
