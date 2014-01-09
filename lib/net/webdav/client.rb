@@ -56,7 +56,7 @@ module Net
             url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port}/", parent_path)
             connection.url = full_url( url )
             connection.http(:MKCOL)
-            raise connection.status unless (connection.response_code == 201 || connection.response_code == 204) || connection.response_code == 405)
+            raise connection.status unless (connection.response_code == 201 || connection.response_code == 204 || connection.response_code == 405)
             return connection.response_code unless connection.response_code == 201 || connection.response_code == 405 # 201 Created or 405 Conflict (already exists)
           end
         end
