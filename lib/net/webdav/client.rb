@@ -49,6 +49,9 @@ module Net
           path_parts.pop
 
           for i in 0..(path_parts.length - 1)
+            #if the part part is for a file with an extension skip
+            next if File.extname(path_parts[i]).present?
+
             parent_path = path_parts[0..i].join('/')
             url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port}/", parent_path)
             connection.url = full_url( url )
