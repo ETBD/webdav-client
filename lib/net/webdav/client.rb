@@ -56,14 +56,18 @@ module Net
             url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port}/", parent_path)
             connection.url = full_url( url )
             connection.http(:MKCOL)
-            raise connection.status unless (connection.response_code == 201 || connection.response_code == 204 || connection.response_code == 405)
+            notify_of_error(connection, "creating directories") unless (connection.response_code == 201 || connection.response_code == 204 || connection.response_code == 405)
             return connection.response_code unless connection.response_code == 201 || connection.response_code == 405 # 201 Created or 405 Conflict (already exists)
           end
         end
         connection.url = full_url(path)
         connection.http_put file
-        raise connection.status unless (connection.response_code == 201 || connection.response_code == 204)
+        notify_of_error(connection, "creating(putting) file") unless (connection.response_code == 201 || connection.response_code == 204)
         connection.response_code
+      end
+
+      def notify_of_error(connection, action)
+        raise "Error in WEBDav Client while #{} with error: #{connection.status}"
       end
 
       def delete_file path
