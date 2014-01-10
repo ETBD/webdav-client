@@ -35,7 +35,7 @@ module Net
         connection.url = full_url(remote_file_path)
         connection.perform
 
-        raise connection.status unless connection.response_code == 200
+        notify_of_error(connection, "getting file. #{remote_file_path}")  unless connection.response_code == 200
 
         file.write(connection.body_str)
       end
