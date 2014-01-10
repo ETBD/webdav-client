@@ -67,7 +67,7 @@ module Net
       end
 
       def notify_of_error(connection, action)
-        raise "Error in WEBDav Client while #{} with error: #{connection.status}"
+        raise "Error in WEBDav Client while #{action} with error: #{connection.status}"
       end
 
       def delete_file path
