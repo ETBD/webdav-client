@@ -28,16 +28,21 @@ module Net
       end
 
       def get_file remote_file_path, local_file_path
-        file = output_file(local_file_path)
+        begin
 
-        connection = Curl::Easy.new
-        connection.userpwd = curl_credentials if @username.present? && @password.present?
-        connection.url = full_url(remote_file_path)
-        connection.perform
+          file = output_file(local_file_path)
 
-        notify_of_error(connection, "getting file. #{remote_file_path}")  unless connection.response_code == 200
+          connection = Curl::Easy.new
+          connection.userpwd = curl_credentials if @username.present? && @password.present?
+          connection.url = full_url(remote_file_path)
+          connection.perform
 
-        file.write(connection.body_str)
+          notify_of_error(connection, "getting file. #{remote_file_path}")  unless connection.response_code == 200
+
+          file.write(connection.body_str)
+        ensure
+          file.close
+        end
       end
 
       def put_file path, file, create_path = false
