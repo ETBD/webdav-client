@@ -67,7 +67,7 @@ module Net
         end
         connection.url = full_url(path)
         connection.http_put file
-        notify_of_error(connection, "creating(putting) file") unless (connection.response_code == 201 || connection.response_code == 204)
+        notify_of_error(connection, "creating(putting) file. File path: #{path}") unless (connection.response_code == 201 || connection.response_code == 204)
         connection.response_code
       end
 
