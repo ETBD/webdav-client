@@ -9,7 +9,7 @@ module Net
 
       def initialize url, options = {}
         scheme, userinfo, hostname, port, registry, path, opaque, query, fragment = URI.split(url)
-        @host = "#{scheme}://#{hostname}#{port.nil? ? "" : ":" + port}"
+        @host = "#{scheme}://#{hostname}#{port.nil? ? "" : ":" + port.to_s}"
         @http_auth_types = options[:http_auth_types] || :basic
 
         unless userinfo.nil?
@@ -58,7 +58,7 @@ module Net
             next if File.extname(path_parts[i]).present?
 
             parent_path = path_parts[0..i].join('/')
-            url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port}/", parent_path)
+            url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port.to_s}/", parent_path)
             connection.url = full_url( url )
             connection.http(:MKCOL)
             notify_of_error(connection, "creating directories") unless (connection.response_code == 201 || connection.response_code == 204 || connection.response_code == 405)
