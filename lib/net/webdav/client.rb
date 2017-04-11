@@ -23,7 +23,7 @@ module Net
       end
 
       def file_exists? path
-        response = Curl::Easy.http_head full_url(path)
+        response = Curl::Easy.http_head full_url(path), &method(:auth)
         response.response_code >= 200 && response.response_code <= 209
       end
 
@@ -49,19 +49,14 @@ module Net
         connection = Curl::Easy.http_head full_url(path), &method(:auth)
 
         if create_path
-          scheme, userinfo, hostname, port, registry, path, opaque, query, fragment = URI.split(full_url(path))
           path_parts = path.split('/').reject {|s| s.nil? || s.empty?}
           path_parts.pop
 
           for i in 0..(path_parts.length - 1)
-            #if the part part is for a file with an extension skip
-            next if File.extname(path_parts[i]).present?
-
             parent_path = path_parts[0..i].join('/')
-            url = URI.join("#{scheme}://#{hostname}#{(port.nil? || port == 80) ? "" : ":" + port}/", parent_path)
-            connection.url = full_url( url )
+            connection.url = full_url(parent_path)
             connection.http(:MKCOL)
-            notify_of_error(connection, "creating directories") unless (connection.response_code == 201 || connection.response_code == 204 || connection.response_code == 405)
+            notify_of_error(connection, "creating directories: #{parent_path}") unless (connection.response_code == 201 || connection.response_code == 204 || connection.response_code == 405)
             return connection.response_code unless connection.response_code == 201 || connection.response_code == 405 # 201 Created or 405 Conflict (already exists)
           end
         end
