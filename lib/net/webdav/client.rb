@@ -23,7 +23,7 @@ module Net
       end
 
       def file_exists? path
-        response = Curl::Easy.http_head full_url(path)
+        response = Curl::Easy.http_head(full_url(path), &method(:auth))
         response.response_code >= 200 && response.response_code <= 209
       end
 
