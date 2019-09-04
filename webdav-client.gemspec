@@ -6,8 +6,8 @@ require 'net/webdav/version'
 Gem::Specification.new do |gem|
   gem.name          = "webdav-client"
   gem.version       = Net::Webdav::VERSION
-  gem.authors       = ["Tom Canham"]
-  gem.email         = ["alphasimian@gmail.com"]
+  gem.authors       = ['RSE Dev Team']
+  gem.email         = ['devteam@ricksteves.com']
   gem.description   = %q{Webdav client}
   gem.summary       = %q{Webdav client}
   gem.homepage      = "https://github.com/ETBD/webdav-client"
